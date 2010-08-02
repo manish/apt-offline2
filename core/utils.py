@@ -12,7 +12,7 @@ def check_root():
     if os.geteuid() != 0:
         throw Exception(NEED_TO_BE_SUPERUSER)
 
-def calcSize( self, size ):
+def humanize_file_size( self, size ):
     ''' Takes number of kB and returns a string
                 of proper size. Like if > 1024, return a megabyte '''
     if size > 1024:
