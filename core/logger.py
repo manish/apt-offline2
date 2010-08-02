@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import threading
+import os
+import sys
 
 WindowColor = True
 try:
