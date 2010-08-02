@@ -5,11 +5,21 @@ import os
 from include import *
 from exception_messages import *
 
+def check_apt_get_availablity():
+    """ Check if apt-get is present on the system or not """
+    
+    if os.system( '/usr/bin/apt-get' ) != 0:
+        raise Exception(APT_GET_MISSING)
+
 def check_platform_supported():
+    """ Checks if the host platform is supported or not """
+    
     if platform.system() in supported_platforms is False:
         raise Exception(PLATFORM_NOT_SUPPORTED)
     
 def check_root():
+    """ Check if the current user has super-administrative priviliges or not """
+    
     if os.geteuid() != 0:
         raise Exception(NEED_TO_BE_SUPERUSER)
 

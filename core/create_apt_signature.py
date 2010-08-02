@@ -42,6 +42,7 @@ def create_signature(filename, is_update, is_upgrade, \
         else:
             os.unlink(filename)
     
+    
     # If the user wants to update
     if is_update:
         update(filename, logger)
@@ -49,6 +50,7 @@ def create_signature(filename, is_update, is_upgrade, \
     # If the user wants to perform an upgrade
     if is_upgrade:
         upgrade(filename, upgrade_type, logger)
+
 
 def update(filename, log):
     """ Invoked if the user has chosen to update his system """
@@ -88,3 +90,72 @@ def upgrade(filename, upgrade_type, log):
     
     # Check if the provided upgrade type is valid or not
     utils.check_valid_upgrade_type(upgrade_type)
+    
+    if upgrade_type == "upgrade":
+        pass
+    elif upgrade_type == "dist-upgrade":
+        upgrade_dist_upgrade(filename ,log)
+    else: upgrade_type == "dselect-upgrade":
+        upgrade_dist_upgrade(filename ,log)
+
+
+def upgrade_upgrade(filename ,log):
+    """ Invoked if the user wanted upgrade """
+    
+    try:
+        import apt
+        try:
+            install_file = open( Str_SetArg, 'a' )
+        except IOError:
+            log.err( "Cannot create file %s.\n" % (Str_SetArg))
+            raise Exception(OPEN_CREATION_SIGNATURE_FILE_FAILED)
+
+        # Get the list of all packages which are fit to be upgraded
+        log.verbose("Using the python-apt library to generate the database.\n")
+        upgradable = filter( lambda p: p.isUpgradable, apt.Cache())
+        log.msg( "\nGenerating database of files that are needed for an upgrade.\n" )
+        
+        #dup_records = []
+        #for pkg in upgradable:
+            #pkg._lookupRecord( True )
+            #dpkg_params = apt_pkg.ParseSection(pkg._records.Record)
+            #arch = dpkg_params['Architecture']
+            #path = dpkg_params['Filename']
+            #checksum = dpkg_params['SHA256'] #FIXME: There can be multiple checksum types
+            #size = dpkg_params['Size']
+            #cand = pkg._depcache.GetCandidateVer( pkg._pkg )
+            #for ( packagefile, i ) in cand.FileList:
+                #indexfile = PythonAptQuery.cache._list.FindIndex( packagefile )
+                #if indexfile:
+                    #uri = indexfile.ArchiveURI( path )
+                    #file = uri.split( '/' )[ - 1]
+                    #if checksum.__str__() in dup_records:
+                            #continue
+                    #install_file.write( uri + ' ' + file + ' ' + size + ' ' + checksum + "\n" )
+                    #dup_records.append( checksum.__str__() )
+    except ImportError:
+        log.msg( "\nGenerating database of files that are needed for an upgrade.\n" )
+        os.environ['__apt_set_upgrade'] = filename
+        
+        if os.system( '/usr/bin/apt-get -qq --print-uris upgrade >> $__apt_set_upgrade' ) != 0:
+            raise Exception(APT_SYSTEM_BROKEN)
+
+
+
+def upgrade_dist_upgrade(filename ,log):
+    """ Invoked if the user wanted a dist-upgrade """
+    
+    log.msg( "\nGenerating database of files that are needed for a dist-upgrade.\n" )
+    os.environ['__apt_set_upgrade'] = filename
+    if os.system( '/usr/bin/apt-get -qq --print-uris dist-upgrade >> $__apt_set_upgrade' ) != 0:
+            raise Exception(APT_SYSTEM_BROKEN)
+
+
+
+def upgrade_dselect_upgrade(filename ,log):
+    """ Invoked if the user wanted a dselect-upgrade """
+    
+    log.msg( "\nGenerating database of files that are needed for a dselect-upgrade.\n" )
+    os.environ['__apt_set_upgrade'] = filename
+    if os.system( '/usr/bin/apt-get -qq --print-uris dselect-upgrade >> $__apt_set_upgrade' ) != 0:
+            raise Exception(APT_SYSTEM_BROKEN)

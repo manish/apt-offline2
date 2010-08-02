@@ -9,3 +9,9 @@ PLATFORM_NOT_SUPPORTED = "This argument is supported only on Unix like systems w
 UPGRADE_TYPE_MISSING = "Please specify one of the upgrade types - upgrade, dist-upgrade, dselect-upgrade"
 
 UPGRADE_TYPE_INVALID = "The upgrade type you provided is invalid. Please choose from upgrade, dist-upgrade, dselect-upgrade"
+
+APT_GET_MISSING = "Jeez! Does your system lacks Super Cow Powers? apt-get is missing"
+
+APT_SYSTEM_BROKEN = "FATAL: Something is wrong with APT system"
+
+OPEN_CREATION_SIGNATURE_FILE_FAILED = "Cannot create/open the signature file provided"
