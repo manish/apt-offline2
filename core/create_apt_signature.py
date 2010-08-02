@@ -50,6 +50,14 @@ def create_signature(filename, is_update, is_upgrade, \
     # If the user wants to perform an upgrade
     if is_upgrade:
         upgrade(filename, upgrade_type, logger)
+    
+    # If the user wants to install packages
+    if install_packages_list != None and install_packages_list  != []:
+        install_packages(filename, install_packages_list, target_release, logger)
+
+    # If the user wants to install source packages
+    if install_src_packages_list != None and install_src_packages_list  != []:
+        install_source_packages(filename, install_src_packages_list, target_release, src_build_dep, logger)
 
 
 def update(filename, log):
@@ -141,15 +149,13 @@ def upgrade_upgrade(filename ,log):
             raise Exception(APT_SYSTEM_BROKEN)
 
 
-
 def upgrade_dist_upgrade(filename ,log):
     """ Invoked if the user wanted a dist-upgrade """
     
     log.msg( "\nGenerating database of files that are needed for a dist-upgrade.\n" )
     os.environ['__apt_set_upgrade'] = filename
     if os.system( '/usr/bin/apt-get -qq --print-uris dist-upgrade >> $__apt_set_upgrade' ) != 0:
-            raise Exception(APT_SYSTEM_BROKEN)
-
+        raise Exception(APT_SYSTEM_BROKEN)
 
 
 def upgrade_dselect_upgrade(filename ,log):
@@ -158,4 +164,72 @@ def upgrade_dselect_upgrade(filename ,log):
     log.msg( "\nGenerating database of files that are needed for a dselect-upgrade.\n" )
     os.environ['__apt_set_upgrade'] = filename
     if os.system( '/usr/bin/apt-get -qq --print-uris dselect-upgrade >> $__apt_set_upgrade' ) != 0:
+        raise Exception(APT_SYSTEM_BROKEN)
+
+
+def install_packages(filename, install_packages_list, target_release, log):
+    """ Invoked if the user wants to install packages """
+    
+    # Check if the platform is supported
+    utils.check_platform_supported()
+    
+    # Check if the user is running with super-user priviliges
+    utils.check_root()
+    
+    comma_sep_package_list = ", ".join(install_packages_list)
+    log.msg( "\nGenerating database of package %s and its dependencies.\n" % (comma_sep_package_list) )
+    
+    package_list = " ".join(install_packages_list)
+    os.environ['__apt_set_install_packages'] = package_list
+    
+    os.environ['__apt_set_install'] = filename
+    
+    # If the target release is specified, include it as -t switch
+    if target_release:
+        os.environ['__apt_set_install_release'] = target_release
+        if os.system( '/usr/bin/apt-get -qq --print-uris -t $__apt_set_install_release install $__apt_set_install_packages >> $__apt_set_install' ) != 0:
             raise Exception(APT_SYSTEM_BROKEN)
+    else:
+        #FIXME: Find a more Pythonic implementation
+        if os.system( '/usr/bin/apt-get -qq --print-uris install $__apt_set_install_packages >> $__apt_set_install' ) != 0:
+            raise Exception(APT_SYSTEM_BROKEN)
+
+
+
+def install_source_packages(filename, install_source_packages_list, target_release, src_build_dep, log):
+    """ Invoked if the user wants to install packages """
+    
+    # Check if the platform is supported
+    utils.check_platform_supported()
+    
+    # Check if the user is running with super-user priviliges
+    utils.check_root()
+    
+    comma_sep_source_package_list = ", ".join(install_source_packages_list)
+    log.msg( "\nGenerating database of package %s and its dependencies.\n" % (comma_sep_source_package_list) )
+    
+    source_package_list = " ".join(install_source_packages_list)
+    os.environ['__apt_set_install_packages'] = source_package_list
+    
+    os.environ['__apt_set_install'] = filename
+    
+    # If the target release is specified, include it as -t switch
+    if target_release:
+        os.environ['__apt_set_install_release'] = target_release
+        if os.system( '/usr/bin/apt-get -qq --print-uris -t $__apt_set_install_release source $__apt_set_install_src_packages >> $__apt_set_install' ) != 0:
+            raise Exception(APT_SYSTEM_BROKEN)
+    else:
+        #FIXME: Find a more Pythonic implementation
+        if os.system( '/usr/bin/apt-get -qq --print-uris source $__apt_set_install_src_packages >> $__apt_set_install' ) != 0:
+            raise Exception(APT_SYSTEM_BROKEN)
+
+    if src_build_dep:
+        log.msg("Generating Build-Dependency for source packages %s.\n" % (comma_sep_source_package_list) )
+        if target_release:
+            os.environ['__apt_set_install_release'] = target_release
+            if os.system( '/usr/bin/apt-get -qq --print-uris -t $__apt_set_install_release build-dep $__apt_set_install_src_packages >> $__apt_set_install' ) != 0:
+                raise Exception(APT_SYSTEM_BROKEN)
+        else:
+            #FIXME: Find a more Pythonic implementation
+            if os.system( '/usr/bin/apt-get -qq --print-uris build-dep $__apt_set_install_src_packages >> $__apt_set_install' ) != 0:
+                raise Exception(APT_SYSTEM_BROKEN)
