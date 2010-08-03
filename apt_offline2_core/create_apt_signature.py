@@ -106,18 +106,21 @@ def upgrade(filename, upgrade_type, log):
     utils.check_valid_upgrade_type(upgrade_type)
     
     if upgrade_type == "upgrade":
-        pass
+        res = upgrade_upgrade(filename ,log)
     elif upgrade_type == "dist-upgrade":
-        upgrade_dist_upgrade(filename ,log)
-    else: upgrade_type == "dselect-upgrade":
-        upgrade_dist_upgrade(filename ,log)
+        res = upgrade_dist_upgrade(filename ,log)
+    elif upgrade_type == "dselect-upgrade":
+        res = upgrade_dist_upgrade(filename ,log)
+        
+    return res
 
 
 def upgrade_upgrade(filename ,log):
     """ Invoked if the user wanted upgrade """
-    
+
     try:
-        import apt
+        # import apt
+        import apton
         try:
             install_file = open( filename, 'a' )
         except IOError:
@@ -153,6 +156,8 @@ def upgrade_upgrade(filename ,log):
         
         if os.system( '/usr/bin/apt-get -qq --print-uris upgrade >> $__apt_set_upgrade' ) != 0:
             raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
+        
+    return True
 
 
 def upgrade_dist_upgrade(filename ,log):
@@ -162,6 +167,8 @@ def upgrade_dist_upgrade(filename ,log):
     os.environ['__apt_set_upgrade'] = filename
     if os.system( '/usr/bin/apt-get -qq --print-uris dist-upgrade >> $__apt_set_upgrade' ) != 0:
         raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
+    
+    return True
 
 
 def upgrade_dselect_upgrade(filename ,log):
@@ -171,6 +178,8 @@ def upgrade_dselect_upgrade(filename ,log):
     os.environ['__apt_set_upgrade'] = filename
     if os.system( '/usr/bin/apt-get -qq --print-uris dselect-upgrade >> $__apt_set_upgrade' ) != 0:
         raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
+    
+    return True
 
 
 def install_packages(filename, install_packages_list, target_release, log):
@@ -200,6 +209,7 @@ def install_packages(filename, install_packages_list, target_release, log):
         if os.system( '/usr/bin/apt-get -qq --print-uris install $__apt_set_install_packages >> $__apt_set_install' ) != 0:
             raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
 
+    return True
 
 
 def install_source_packages(filename, install_source_packages_list, target_release, src_build_dep, log):
