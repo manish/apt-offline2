@@ -5,7 +5,13 @@ import os.path
 
 # Import all the Exception messages
 from exception_messages import *
+
+# Import all Exceptions
+from exceptions import *
+
+# Include Utility functions
 import utils
+
 from include import *
 
 def create_signature(filename, is_update, is_upgrade, \
@@ -38,7 +44,7 @@ def create_signature(filename, is_update, is_upgrade, \
     # Check if the file already exists, then try to delete it
     if os.path.isfile(filename):
         if os.access( filename, os.W_OK )  is False:
-            raise Exception(SIGNATURE_FILE_NOT_WRITABLE)
+            raise SignatureFileError(SIGNATURE_FILE_NOT_WRITABLE)
         else:
             os.unlink(filename)
     
@@ -113,10 +119,10 @@ def upgrade_upgrade(filename ,log):
     try:
         import apt
         try:
-            install_file = open( Str_SetArg, 'a' )
+            install_file = open( filename, 'a' )
         except IOError:
-            log.err( "Cannot create file %s.\n" % (Str_SetArg))
-            raise Exception(OPEN_CREATION_SIGNATURE_FILE_FAILED)
+            log.err( "Cannot create file %s.\n" % (filename))
+            raise SignatureFileError(OPEN_CREATION_SIGNATURE_FILE_FAILED)
 
         # Get the list of all packages which are fit to be upgraded
         log.verbose("Using the python-apt library to generate the database.\n")
@@ -146,7 +152,7 @@ def upgrade_upgrade(filename ,log):
         os.environ['__apt_set_upgrade'] = filename
         
         if os.system( '/usr/bin/apt-get -qq --print-uris upgrade >> $__apt_set_upgrade' ) != 0:
-            raise Exception(APT_SYSTEM_BROKEN)
+            raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
 
 
 def upgrade_dist_upgrade(filename ,log):
@@ -155,7 +161,7 @@ def upgrade_dist_upgrade(filename ,log):
     log.msg( "\nGenerating database of files that are needed for a dist-upgrade.\n" )
     os.environ['__apt_set_upgrade'] = filename
     if os.system( '/usr/bin/apt-get -qq --print-uris dist-upgrade >> $__apt_set_upgrade' ) != 0:
-        raise Exception(APT_SYSTEM_BROKEN)
+        raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
 
 
 def upgrade_dselect_upgrade(filename ,log):
@@ -164,7 +170,7 @@ def upgrade_dselect_upgrade(filename ,log):
     log.msg( "\nGenerating database of files that are needed for a dselect-upgrade.\n" )
     os.environ['__apt_set_upgrade'] = filename
     if os.system( '/usr/bin/apt-get -qq --print-uris dselect-upgrade >> $__apt_set_upgrade' ) != 0:
-        raise Exception(APT_SYSTEM_BROKEN)
+        raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
 
 
 def install_packages(filename, install_packages_list, target_release, log):
@@ -188,11 +194,11 @@ def install_packages(filename, install_packages_list, target_release, log):
     if target_release:
         os.environ['__apt_set_install_release'] = target_release
         if os.system( '/usr/bin/apt-get -qq --print-uris -t $__apt_set_install_release install $__apt_set_install_packages >> $__apt_set_install' ) != 0:
-            raise Exception(APT_SYSTEM_BROKEN)
+            raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
     else:
         #FIXME: Find a more Pythonic implementation
         if os.system( '/usr/bin/apt-get -qq --print-uris install $__apt_set_install_packages >> $__apt_set_install' ) != 0:
-            raise Exception(APT_SYSTEM_BROKEN)
+            raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
 
 
 
@@ -217,19 +223,19 @@ def install_source_packages(filename, install_source_packages_list, target_relea
     if target_release:
         os.environ['__apt_set_install_release'] = target_release
         if os.system( '/usr/bin/apt-get -qq --print-uris -t $__apt_set_install_release source $__apt_set_install_src_packages >> $__apt_set_install' ) != 0:
-            raise Exception(APT_SYSTEM_BROKEN)
+            raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
     else:
         #FIXME: Find a more Pythonic implementation
         if os.system( '/usr/bin/apt-get -qq --print-uris source $__apt_set_install_src_packages >> $__apt_set_install' ) != 0:
-            raise Exception(APT_SYSTEM_BROKEN)
+            raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
 
     if src_build_dep:
         log.msg("Generating Build-Dependency for source packages %s.\n" % (comma_sep_source_package_list) )
         if target_release:
             os.environ['__apt_set_install_release'] = target_release
             if os.system( '/usr/bin/apt-get -qq --print-uris -t $__apt_set_install_release build-dep $__apt_set_install_src_packages >> $__apt_set_install' ) != 0:
-                raise Exception(APT_SYSTEM_BROKEN)
+                raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
         else:
             #FIXME: Find a more Pythonic implementation
             if os.system( '/usr/bin/apt-get -qq --print-uris build-dep $__apt_set_install_src_packages >> $__apt_set_install' ) != 0:
-                raise Exception(APT_SYSTEM_BROKEN)
+                raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
