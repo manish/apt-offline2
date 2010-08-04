@@ -225,7 +225,7 @@ def install_source_packages(filename, install_source_packages_list, target_relea
     log.msg( "\nGenerating database of package %s and its dependencies.\n" % (comma_sep_source_package_list) )
     
     source_package_list = " ".join(install_source_packages_list)
-    os.environ['__apt_set_install_packages'] = source_package_list
+    os.environ['__apt_set_install_src_packages'] = source_package_list
     
     os.environ['__apt_set_install'] = filename
     
@@ -249,3 +249,5 @@ def install_source_packages(filename, install_source_packages_list, target_relea
             #FIXME: Find a more Pythonic implementation
             if os.system( '/usr/bin/apt-get -qq --print-uris build-dep $__apt_set_install_src_packages >> $__apt_set_install' ) != 0:
                 raise AptSystemBrokenError(APT_SYSTEM_BROKEN)
+
+    return True
