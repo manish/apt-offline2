@@ -65,6 +65,7 @@ def create_signature(filename, is_update, is_upgrade, \
     if install_src_packages_list != None and install_src_packages_list  != []:
         install_source_packages(filename, install_src_packages_list, target_release, src_build_dep, logger)
 
+    return True
 
 def update(filename, log):
     """ Invoked if the user has chosen to update his system """
