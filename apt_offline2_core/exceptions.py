@@ -23,3 +23,7 @@ class AptSystemBrokenError(Exception):
 class SignatureFileError(Exception):
     def __init__(self, message):
         Exception.__init__(self, message)
+
+class WrongDataTypeError(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)

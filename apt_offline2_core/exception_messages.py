@@ -15,3 +15,11 @@ APT_GET_MISSING = "Jeez! Does your system lacks Super Cow Powers? apt-get is mis
 APT_SYSTEM_BROKEN = "FATAL: Something is wrong with APT system"
 
 OPEN_CREATION_SIGNATURE_FILE_FAILED = "Cannot create/open the signature file provided"
+
+SOCKET_TIMEOUT_SHOULD_BE_INTEGER = "Socket timeout value needs to be a integer"
+
+SIGNATURE_FILE_NOT_PROVIDED = "Filename is not provided"
+
+SIGNATURE_FILE_MISSING_INACCESSIBLE = "Either the provided file does not exist or is not accessible"
+
+CACHE_DIR_ERROR = "Cache directory provided is not a directory or does not exist"

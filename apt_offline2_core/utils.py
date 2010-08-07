@@ -37,7 +37,6 @@ def humanize_file_size( self, size ):
         return ( "%d MiB" % ( size ) )
         
     return ( "%d KiB" % ( size ) )
-    
 
 def check_valid_upgrade_type(upgrade_type):
     """ Checks if the upgrade_type is valid or not """
@@ -47,3 +46,47 @@ def check_valid_upgrade_type(upgrade_type):
     
     if upgrade_type not in upgrade_types:
         raise UpgradeTypeInvalidError(UPGRADE_TYPE_INVALID)
+
+def files(root): 
+        for path, folders, files in os.walk(root): 
+                for file in files: 
+                        yield path, file 
+
+def find_first_match(cache_dir=None, filename=None):
+        '''Return the full path of the filename if a match is found
+        Else Return False'''
+        
+        # Do the sanity check first
+        #if cache_dir is None or filename is None or os.path.isdir(cache_dir) is False:
+        if cache_dir is None:
+                return False
+        elif filename is None:
+                return False
+        elif os.path.isdir(cache_dir) is False:
+                return False
+        else:
+                for path, file in files(cache_dir): 
+                        if file == filename:
+                                return os.path.join(path, file)
+                return False
+
+
+def stripper(item):
+        '''Strips extra characters from "item".
+        Breaks "item" into:
+        url - The URL
+        file - The actual package file
+        size - The file size
+        checksum - The checksum string
+        and returns them.'''
+    
+        item = item.split(' ')
+        url = string.rstrip(string.lstrip(''.join(item[0]), chars="'"), chars="'")
+        file = string.rstrip(string.lstrip(''.join(item[1]), chars="'"), chars="'")
+        size = int(string.rstrip(string.lstrip(''.join(item[2]), chars = "'"), chars="'"))
+        #INFO: md5 ends up having '\n' with it.
+        # That needs to be stripped too.
+        checksum = string.rstrip(string.lstrip(''.join(item[3]), chars = "'"), chars = "'")
+        checksum = string.rstrip(checksum, chars = "\n")
+    
+        return url, file, size, checksum

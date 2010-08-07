@@ -36,6 +36,7 @@ def create_signature(filename, is_update, is_upgrade, \
     
     # If the user doesn't specify anything, then by default 
     # it means that he/she wants to run update and upgrade
+    
     if is_update is False and is_upgrade is False \
         and install_packages_list is None and install_src_packages_list is None:
         is_update = True
