@@ -16,13 +16,13 @@ except ImportError:
         Python_2_5 = False
 
 
-class IDownloader:
+class INotify:
     """
     Creates a generic class interface. The methods needs to be
     overloaded so that it can be used
     """
     
-    def current_file_progress(filename, total_size, size_downloaded):
+    def current_file_progress(thread_name, filename, total_size, size_downloaded):
         """
         Gives the progress of the current file
         
@@ -32,14 +32,14 @@ class IDownloader:
         
         pass
     
-    def items_downloaded(total_items, downloaded_items):
+    def items_downloaded(thread_name, total_items, downloaded_items):
         """
         Tells us the no of files downloaded out of the total
         """
         
         pass
     
-    def size_download_progress(total_size, current_download_size):
+    def size_download_progress(thread_name, total_size, current_download_size):
         """
         Tells us the total size whicj is to be downloaded and the current 
         amount which has been downloaded

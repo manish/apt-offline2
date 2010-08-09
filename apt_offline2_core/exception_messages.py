@@ -23,3 +23,11 @@ SIGNATURE_FILE_NOT_PROVIDED = "Filename is not provided"
 SIGNATURE_FILE_MISSING_INACCESSIBLE = "Either the provided file does not exist or is not accessible"
 
 CACHE_DIR_ERROR = "Cache directory provided is not a directory or does not exist"
+
+LOGGER_TYPE_WRONG = "The supplied logger instance is not an instance of logger.Log"
+
+NOTIFICATION_TYPE_WRONG = "The supplied notification object does not extend include.INotify"
+
+DOWNLOAD_FILE_NAME_FORMAT_ERROR = "The download file name cannot be determined. Filename is %s"
+
+DOWNLOAD_DIR_NOT_WRITABLE = "The temp download directory %s is not writable"
