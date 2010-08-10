@@ -4,6 +4,7 @@ import os
 import os.path
 import sys
 import tempfile
+from decimal import Decimal
 
 cwd = os.getcwd()
 parent_path = os.path.dirname(cwd)
@@ -54,7 +55,7 @@ class Notifier(INotify):
         """
         self.total_data_size = total_size
         self.total_downloaded = 0
-        print("Total size to download: %s\n" %(utils.humanize_file_size(total_size/1000)))
+        print("Total size to download: %s\n" %(utils.humanize_file_size(total_size/Decimal(1000))))
     
     
     def add_downloaded_size(self, size_downloaded):
@@ -63,7 +64,7 @@ class Notifier(INotify):
         """
         
         self.total_downloaded += int(size_downloaded)
-        print("More downloaded: %s/%s \n" %( utils.humanize_file_size(self.total_downloaded/1000), utils.humanize_file_size(self.total_data_size/1000) ))
+        print("More downloaded: %s/%s \n" %( utils.humanize_file_size(self.total_downloaded/Decimal(1000)), utils.humanize_file_size(self.total_data_size/Decimal(1000)) ))
     
 notify = Notifier()
 cache_dir = os.path.join(tempfile.gettempdir(),"foo")

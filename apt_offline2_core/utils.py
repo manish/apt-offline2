@@ -7,6 +7,7 @@ import hashlib
 import threading
 import urllib2
 import socket
+from decimal import *
 
 from include import *
 from exception_messages import *
@@ -33,16 +34,18 @@ def check_root():
 def humanize_file_size( size ):
     ''' Takes number of kB and returns a string
                 of proper size. Like if > 1024, return a megabyte '''
+    getcontext().prec = 3
+    size = Decimal(size)
     if size > 1024:
-        size = size // 1024
+        size = size / Decimal(1024)
         
         if size > 1024:
-            size = size // 1024
-            return ( "%d GiB" % ( size ) )
+            size = size / Decimal(1024)
+            return ( "%s GiB" % ( size.__str__() ) )
         
-        return ( "%d MiB" % ( size ) )
+        return ( "%s MiB" % ( size.__str__() ) )
         
-    return ( "%d KiB" % ( size ) )
+    return ( "%s KiB" % ( size.__str__() ) )
 
 def check_valid_upgrade_type(upgrade_type):
     """ Checks if the upgrade_type is valid or not """
