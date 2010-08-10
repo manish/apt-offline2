@@ -4,6 +4,9 @@ import platform
 import os
 import string
 import hashlib
+import threading
+import urllib2
+import socket
 
 from include import *
 from exception_messages import *
@@ -131,3 +134,83 @@ def CheckHashDigest(file, checksum):
     type=type.lower()
     checksum=checksum.split(":")[1]
     return HashMessageDigestAlgorithms(checksum, type, file)
+
+
+def download_from_web(url, file, download_dir, notification):
+    '''url = url to fetch
+    file = file to save to
+    donwload_dir = download path'''
+    
+    socket.setdefaulttimeout(30)
+    
+    try:
+        thread_name = threading.currentThread().getName()
+        block_size = 4096
+        i = 0
+        counter = 0
+        size_done = 0
+        
+        os.chdir(download_dir)
+        temp = urllib2.urlopen(url)
+        headers = temp.info()
+        size = int(headers['Content-Length'])
+        data = open(file,'wb')
+
+        socket_counter = 0
+        while i < size:
+            socket_timeout = None
+            try:
+                data.write (temp.read(block_size))
+            except socket.timeout, timeout:
+                socket_timeout = True
+                socket_counter += 1
+            except socket.error, error:
+                socket_timeout = True
+                socket_counter += 1
+            if socket_counter == SOCKET_TIMEOUT_RETRY:
+                #errfunc(101010, "Max timeout retry count reached. Discontinuing download.\n", url)
+                
+                # Clean the half downloaded file.
+                os.unlink(file)
+                return False
+            
+            if socket_timeout is True:
+                #errfunc(10054, "Socket Timeout. Retry - %d\n" % (socket_counter) , url)
+                continue
+
+            size_done += min(block_size, size - i)
+            size_done = min(size_done, size)
+            increment = min(block_size, size - i)
+            i += block_size
+            counter += 1
+            notification.current_file_progress(thread_name, file, size, size_done)
+        
+        data.close()
+        temp.close()
+        return True
+    #FIXME: Find out optimal fix for this exception handling
+    except OSError, (errno, strerror):
+        errfunc(errno, strerror, download_dir)
+    except urllib2.HTTPError, errstring:
+        errfunc(errstring.code, errstring.msg, url)
+    except urllib2.URLError, errstring:
+        #INFO: Weird. But in urllib2.URLError, I noticed that for
+        # error type "timeouts", no errno was defined.
+        # errstring.errno was listed as None 
+        # In my tests, wget categorized this behavior as:
+        # 504: gateway timeout
+        # So I am doing the same here.
+        #if errstring.errno is None:
+        #    errfunc(504, errstring.reason, url)
+        #else:
+        #    errfunc(errstring.errno, errstring.reason, url)
+        pass
+    except IOError, e:
+        if hasattr(e, 'reason'):
+            log.err("%s\n" % (e.reason))
+        if hasattr(e, 'code') and hasattr(e, 'reason'):
+            #errfunc(e.code, e.reason, file)
+            pass
+    except socket.timeout:
+        #errfunc(10054, "Socket timeout.\n", url)
+        pass

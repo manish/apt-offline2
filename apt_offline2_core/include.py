@@ -15,6 +15,7 @@ try:
 except ImportError:
         Python_2_5 = False
 
+SOCKET_TIMEOUT_RETRY = 5
 
 class INotify:
     """
@@ -22,26 +23,39 @@ class INotify:
     overloaded so that it can be used
     """
     
-    def current_file_progress(thread_name, filename, total_size, size_downloaded):
+    def current_file_progress(self, thread_name, filename, total_size, size_downloaded):
         """
         Gives the progress of the current file
         
         This method gives the name of the currently downloaed file, the
         total size of the file and the size of file downloaded
         """
-        
+        pass
+
+
+    def set_total_items(self, items_count):
+        """
+        Sets the total number of items to be downloaded
+        """
+        pass
+
+
+    def increment_download(self, file_name):
+        """
+        Adds one to the total number of downloaded items
+        """
         pass
     
-    def items_downloaded(thread_name, total_items, downloaded_items):
+    
+    def set_total_download_size(self, total_size):
         """
-        Tells us the no of files downloaded out of the total
+        Tells us the total size which is to be downloaded
         """
-        
         pass
     
-    def size_download_progress(thread_name, total_size, current_download_size):
+    
+    def add_downloaded_size(self, size_downloaded):
         """
-        Tells us the total size whicj is to be downloaded and the current 
-        amount which has been downloaded
+        Tells us the size downloaded which needs to be incremented
         """
         pass

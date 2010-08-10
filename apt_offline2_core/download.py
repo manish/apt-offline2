@@ -140,7 +140,11 @@ def download(filename, download_dir, cache_dir, disable_md5check, num_of_threads
     # total_download_size will store the total size to be downloaded
     # It is initialized to 0
     total_download_size = 0
-    
+   
+    # Create two Queues for the requests and responses
+    requestQueue = Queue.Queue()
+    responseQueue = Queue.Queue()
+  
     for item in items_for_download:
         try:
             (url, file, download_size, checksum) = utils.stripper(item)
@@ -154,17 +158,19 @@ def download(filename, download_dir, cache_dir, disable_md5check, num_of_threads
                 headers = temp.info()
                 size = int(headers['Content-Length'])
             total_download_size += size
+            requestQueue.put((url, file, size, checksum))
         except Exception as e:
             ''' some int parsing problem '''
             pass
     
-    log.msg("Total size to download: %s" %(utils.humanize_file_size(total_download_size/1000)))
+    # Send the total items to be downloaded and total download size as notification
+    notification_object.set_total_items(total_items) 
+    notification_object.set_total_download_size(total_download_size)
+
+    log.msg("Total size to download: %s\n" %(utils.humanize_file_size(total_download_size/1000)))
 
     
-    # Create two Queues for the requests and responses
-    requestQueue = Queue.Queue()
-    responseQueue = Queue.Queue()
-    # Pool of NUMTHREADS Threads that run run().
+        # Pool of NUMTHREADS Threads that run run().
     thread_pool =   [
                     threading.Thread(
                                     target = run,
@@ -177,6 +183,7 @@ def download(filename, download_dir, cache_dir, disable_md5check, num_of_threads
                                             socket_timeout,
                                             download_dir,
                                             cache_dir,
+                                            total_items,
                                             log
                                             )
                                     )
@@ -185,10 +192,6 @@ def download(filename, download_dir, cache_dir, disable_md5check, num_of_threads
     
     # Start the threads.
     for t in thread_pool: t.start()
-    
-    # Queue up the requests.
-    for item in items_for_download:
-        requestQueue.put(item)
     
     # Don't end the program prematurely.
     # (Note that because Queue.get() is blocking by
@@ -200,22 +203,23 @@ def download(filename, download_dir, cache_dir, disable_md5check, num_of_threads
 
 
 
-def run(request, response, notification_object, disable_md5check, bundle_file, 
-                            socket_timeout, download_dir, cache_dir, log, func=utils.find_first_match):
+def run(request, response, notification_object, disable_md5check, bundle_file, socket_timeout, 
+                    download_dir, cache_dir, total_items, log, func=utils.find_first_match):
     """ Get the packages """
 
-    # Create an infinite loop and break only when the queue is empty
-    while 1:
+    # The counter which actually keeps track of the total amoutn downloaded
+    total_handled = 0
 
-        # Try fetching the element from the Queue
-        try:
-            item = request.get()
-        # If the queue becomes empty, then Queue.Empty exception is raised
-        except Queue.Empty:
+    # Create an infinite loop and break only when the queue is empty
+    while True:
+
+        # If there is no item in the request Queue 
+        if request.empty():
             break
 
-        # Break the item into url, filename, size and checksum
-        (url, file, download_size, checksum) = utils.stripper(item)
+        # Get an item from the request queue
+        url, file, size, checksum = request.get()
+ 
         # Get the name of the current thread
         thread_name = threading.currentThread().getName()
 
@@ -255,6 +259,14 @@ def run(request, response, notification_object, disable_md5check, bundle_file,
                                             package_name, # The name of the package without version number
                                             download_dir # The directory where the packages have to be downloaded
                                             )
+                    # Add this package's size to total_download
+                    total_handled += size
+
+                    # Send a notificiation to the update the data download
+                    notification_object.increment_download(file)
+                    # Send a notification to increment download_size
+                    notification_object.add_downloaded_size(size)
+
                 else:
                     # The file needs to be downloaded
                     download_deb_file   (
@@ -267,9 +279,19 @@ def run(request, response, notification_object, disable_md5check, bundle_file,
                                         package_name,
                                         bundle_file,
                                         package_version,
-                                        log
+                                        log,
+                                        notification_object
                                         )
-                    pass
+                    
+                    # Add this package's size to the total_download
+                    total_handled += size
+
+                    # Send a notification to update the data downloaded
+                    notification_object.increment_download(file)
+                    # Send a notification to increment download_size
+                    notification_object.add_downloaded_size(size)
+
+
             else:
                 raise DownloadFileFormatError(DOWNLOAD_FILE_NAME_FORMAT_ERROR %(file))
         else:
@@ -305,8 +327,11 @@ def handle_cached_file(file, full_file_path, disable_md5check, checksum, url,  b
             # Download the file 
             # TODO : Implement download 
 
-def download_deb_file(file, url, disable_md5check, checksum, download_dir, 
-                                cache_dir, package_name, bundle_file, package_version, log):
+def download_deb_file(file, url, disable_md5check, checksum, download_dir, cache_dir, 
+                        package_name, bundle_file, package_version, log, notification_object):
     """ Download the deb file """
     log.msg("Inside the file %s\n" %(file))
- 
+    is_download_success = utils.download_from_web(url, file, download_dir, notification_object)
+    if is_download_success:
+        # The package has been downloaded successfully
+        pass
