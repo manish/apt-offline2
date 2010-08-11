@@ -45,7 +45,7 @@ class Notifier(INotify):
         Adds one to the total number of downloaded items
         """
         self.downloaded += 1
-        print("One more downloaded: %s | Total adds to: %s/%s\n" %(file_name, self.downloaded, self.total_count))
+        print("Another package: %s | Total adds to: %s/%s\n" %(file_name, self.downloaded, self.total_count))
         
     
     
@@ -68,6 +68,8 @@ class Notifier(INotify):
     
 notify = Notifier()
 cache_dir = os.path.join(tempfile.gettempdir(),"foo")
+
+cache_dir = "/tmp/apt-offline-downloads-8275"
 
 download(   "/tmp/install_packages_only_no_target", # The signature file \
             None,  # Can be None. If None, then tempdir is used \

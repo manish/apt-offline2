@@ -78,6 +78,8 @@ def download(filename, download_dir, cache_dir, disable_md5check, num_of_threads
         if os.path.isdir(cache_dir) is False:
             log.verbose( "WARNING: cache dir %s is incorrect. Did you give the full path ?\n" % (cache_dir) )
             raise IOError(CACHE_DIR_ERROR)
+        elif os.access(cache_dir, os.W_OK) is False:
+            log.verbose("Cache directory is not writeable. Downloads won't be cached")
 
 
     # Check if the download directory is provided
@@ -240,7 +242,7 @@ def run(request, response, notification_object, disable_md5check, bundle_file, s
                     package_version = package_details[1]
                 except IndexError:
                     package_verion = "NA"
-                    log.verbose("Package version not found. Is it really a .deb file?")
+                    log.verbose("Package version not found. Is it really a .deb file?\n")
 
                 # Check if the package is on the local cache or not
                 response.put(func(cache_dir, file))
@@ -248,16 +250,20 @@ def run(request, response, notification_object, disable_md5check, bundle_file, s
                 # Find the full file path
                 full_file_path = response.get()
                 if full_file_path is not False:
+                    log.msg("Package %s found in the cache\n" %(package_name))
                     # The file is downloaded and cached in the specified cache folder
                     handle_cached_deb_file  (
-                                            file, # The filename 
-                                            full_file_path, # The full file path of the cached file
-                                            disable_md5check, # If the md5 check has to be disabled
-                                            checksum, # The actual md5 checksum
-                                            url, # The url of the package to be retrieved if the md5 check failed
-                                            bundle_file, # The name of the file to which the packages have to be archived
-                                            package_name, # The name of the package without version number
-                                            download_dir # The directory where the packages have to be downloaded
+                                            file,
+                                            url,
+                                            disable_md5check,
+                                            checksum,
+                                            download_dir,
+                                            cache_dir,
+                                            package_name,
+                                            bundle_file,
+                                            package_version,
+                                            log,
+                                            notification_object
                                             )
                     # Add this package's size to total_download
                     total_handled += size
@@ -298,13 +304,15 @@ def run(request, response, notification_object, disable_md5check, bundle_file, s
             # The file is an update file
             pass
 
-def handle_cached_file(file, full_file_path, disable_md5check, checksum, url,  bundle_file, package_name, download_dir):
+def handle_cached_deb_file( file, url, disable_md5check, checksum, download_dir, cache_dir, 
+                        package_name, bundle_file, package_version, log, notification_object):
+   
     """ If a file has been downloaded and is present in the download cache, then retrive the package from there """
 
     if disable_md5check is False:
         # The md5 check is requested
         if utils.CheckHashDigest(full_file_path, checksum):
-            log.verbose("Checksum correct for package: %s" %(package_name))
+            log.verbose("Checksum correct for package: %s\n" %(package_name))
 
             if bundle_file:
                 # Copy the file to the archive
@@ -322,11 +330,22 @@ def handle_cached_file(file, full_file_path, disable_md5check, checksum, url,  b
 
         else:
             # Download the package again
-            log.verbose("%s checksum mismatch. Skipping it" %(full_file_path))
-            log.msg("Downloading %s" %(package_name))
+            log.verbose("%s checksum mismatch.\n" %(full_file_path))
+            log.msg("Downloading %s\n" %(package_name))
             # Download the file 
-            # TODO : Implement download 
-
+            download_deb_file   (
+                                file, 
+                                url, 
+                                disable_md5check, 
+                                checksum, 
+                                download_dir, 
+                                cache_dir, 
+                                package_name, 
+                                package_version, 
+                                log, 
+                                notification_object
+                                )
+            
 def download_deb_file(file, url, disable_md5check, checksum, download_dir, cache_dir, 
                         package_name, bundle_file, package_version, log, notification_object):
     """ Download the deb file """
@@ -334,4 +353,25 @@ def download_deb_file(file, url, disable_md5check, checksum, download_dir, cache
     is_download_success = utils.download_from_web(url, file, download_dir, notification_object)
     if is_download_success:
         # The package has been downloaded successfully
-        pass
+        if disable_md5check is False:
+
+            # Check if the checksum is valid
+            is_valid_checksum = utils.CheckHashDigest(file, checksum)
+
+            if is_valid_checksum:
+                if cache_dir and os.access(cache_dir, os.W_OK):
+                    try:
+                        shutil.copy(file, cache_dir)
+                    except shutil.Error:
+                        log.msg("%s file is already present in cache dir %s" %(file, cache_dir))
+            else:
+                log.err("%s checksum mismatch" %(package_name))
+
+        # TODO
+        # Bundle the file into an archive
+        if bundle_file:
+            pass
+
+    # Send the notification that this package failed to download
+    else:
+        notification_object.failed_packages(package_name, package_version)

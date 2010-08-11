@@ -59,3 +59,9 @@ class INotify:
         Tells us the size downloaded which needs to be incremented
         """
         pass
+    
+    def failed_packages(self, package_name, package_verion):
+        """
+        Tells us the package name and the version of the packages which failed_packages
+        """
+        pass
