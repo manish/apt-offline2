@@ -67,16 +67,15 @@ class Notifier(INotify):
         print("More downloaded: %s/%s \n" %( utils.humanize_file_size(self.total_downloaded/Decimal(1000)), utils.humanize_file_size(self.total_data_size/Decimal(1000)) ))
     
 notify = Notifier()
-cache_dir = os.path.join(tempfile.gettempdir(),"foo")
+cache_dir = None
 
-cache_dir = "/tmp/apt-offline-downloads-8275"
 
 download(   "/tmp/install_packages_only_no_target", # The signature file \
             None,  # Can be None. If None, then tempdir is used \
             cache_dir , # cache_dir Has to be provided \
             True, # Yes, for timebeing disable md5 check \
             2, # No of threads - 2 \
-            None, # Bundle file is none. Files wont be archived \
+            "/tmp/a.zip", # Bundle file is none. Files wont be archived \
             1000, # Socket timeout - 1000 ms \
             None, # no bug management\
             notify, # The instance of the notification object \

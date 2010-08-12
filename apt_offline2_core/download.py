@@ -316,8 +316,8 @@ def handle_cached_deb_file( file, url, disable_md5check, checksum, download_dir,
 
             if bundle_file:
                 # Copy the file to the archive
-                # TODO : Implement the archiving the file
-                pass
+                zipFile = Archiver(None)
+                zipFile.compress_the_file(bundle_file, file)
 
             # The user has not requested to archive the file, just copy it to download_dir
             else:
@@ -367,10 +367,10 @@ def download_deb_file(file, url, disable_md5check, checksum, download_dir, cache
             else:
                 log.err("%s checksum mismatch" %(package_name))
 
-        # TODO
         # Bundle the file into an archive
         if bundle_file:
-            pass
+            zipFile = Archiver(None)
+            zipFile.compress_the_file(bundle_file, file)
 
     # Send the notification that this package failed to download
     else:
