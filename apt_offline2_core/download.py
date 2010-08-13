@@ -6,6 +6,7 @@ import socket
 import Queue
 import threading
 import tempfile
+import urllib2
 
 # Import all the Exception messages
 from exception_messages import *
@@ -151,11 +152,11 @@ def download(filename, download_dir, cache_dir, disable_md5check, num_of_threads
         try:
             (url, file, download_size, checksum) = utils.stripper(item)
             size = int(download_size)
-            log.msg("File: %s | URI: %s | Size: %s\n" %(file, url, download_size))
+            #log.msg("File: %s | URI: %s | Size: %s\n" %(file, url, download_size))
             # If the download size is 0, then make a HTTP HEAD request to
             # to know the actual size
             if size == 0:
-                log.msg("Trying to get the filesize of file %s" %(file))
+                #log.msg("Trying to get the filesize of file %s" %(file))
                 temp = urllib2.urlopen(url)
                 headers = temp.info()
                 size = int(headers['Content-Length'])
@@ -169,7 +170,7 @@ def download(filename, download_dir, cache_dir, disable_md5check, num_of_threads
     notification_object.set_total_items(total_items) 
     notification_object.set_total_download_size(total_download_size)
 
-    log.msg("Total size to download: %s\n" %(utils.humanize_file_size(total_download_size/1000)))
+    #log.msg("Total size to download: %s\n" %(utils.humanize_file_size(total_download_size/1000)))
 
     
         # Pool of NUMTHREADS Threads that run run().
@@ -211,7 +212,7 @@ def run(request, response, notification_object, disable_md5check, bundle_file, s
 
     # The counter which actually keeps track of the total amoutn downloaded
     total_handled = 0
-
+    
     # Create an infinite loop and break only when the queue is empty
     while True:
 
@@ -224,7 +225,6 @@ def run(request, response, notification_object, disable_md5check, bundle_file, s
  
         # Get the name of the current thread
         thread_name = threading.currentThread().getName()
-
         if file.endswith(".deb"):
             # The file is a deb file which needs to be downloaded
 
@@ -302,7 +302,17 @@ def run(request, response, notification_object, disable_md5check, bundle_file, s
                 raise DownloadFileFormatError(DOWNLOAD_FILE_NAME_FORMAT_ERROR %(file))
         else:
             # The file is an update file
-            pass
+            
+            is_download_success = utils.download_from_web(url, file, download_dir, notification_object)
+            if is_download_success:
+                log.msg("Successful package download: %s \n" %(file))
+                if bundle_file:
+                    try:
+                        zipFile = Archiver(None)
+                        if zipFile.compress_the_file(bundle_file, file) is False:
+                            log.err("Archiving of file %s failed" %(file))
+                    except:
+                        log.err("Archiving of file %s failed" %(file))
 
 def handle_cached_deb_file( file, url, disable_md5check, checksum, download_dir, cache_dir, 
                         package_name, bundle_file, package_version, log, notification_object):
